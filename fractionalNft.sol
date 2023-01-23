@@ -13,7 +13,6 @@ import "hardhat/console.sol";
 contract FractionalNft is Pausable, ERC721, Ownable, ReentrancyGuard{
     using SafeMath for uint256;
     IERC20 private tokenAddress;
-    uint256 private numConfirmationsRequired;
 
     event Deposit(address indexed sender, uint amount, uint balance);
     event SubmitTransaction(
@@ -213,8 +212,8 @@ contract FractionalNft is Pausable, ERC721, Ownable, ReentrancyGuard{
     function changeNumConfirmationsRequired(uint _txIndex, uint256 _newNumConfirmationsRequired) external whenNotPaused onlyFractionalOwners notExecuted(_txIndex) {
         Transaction storage transaction = transactions[_txIndex];
         require(transaction.from == msg.sender, "No owner for submited transaction");
-        require(numConfirmationsRequired != _newNumConfirmationsRequired, "Already same");
-        numConfirmationsRequired = _newNumConfirmationsRequired;
+        require(transaction.confirmationsRequired != _newNumConfirmationsRequired, "Already same");
+        transaction.confirmationsRequired = _newNumConfirmationsRequired;
     }
 
     function pause() external {
