@@ -114,6 +114,7 @@ contract FractionalNft is Pausable, ERC721{
         tokenAddress.transferFrom(msg.sender, address(this), _sharesAmount);
         // update mapping
         idToPrice[_tokenId] = _price;
+        idToOwner[_tokenId] = payable(msg.sender);
         // update share value
         uint256 _pricePerShare = idToPrice[_tokenId];
         idToShareValue[_tokenId] = _pricePerShare.div(_sharesAmount);
@@ -261,7 +262,7 @@ contract FractionalNft is Pausable, ERC721{
     function getFractionalBuyers(uint256 _tokenId) public view returns(address){
         return fractionalBuyers[_tokenId];
     }
-    
+
     function getTotalSharesPerTokenId(uint256 _tokenId) public view returns(address[] memory){
         return idToNFT[_tokenId].fractionalBuyerss;
     }
