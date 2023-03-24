@@ -194,12 +194,12 @@ contract FractionalNft is Pausable, ERC721, Ownable, ReentrancyGuard{
             "Required confirmation should be same"
         );
         require(_price != 0, "Price cannot be 0");
-        emit ExecuteTransaction(msg.sender, _txIndex);
         uint256 newPrice = _price / idToNFT[_tokenId].fractionalBuyer.length;
         for (uint i = 0; i < idToNFT[_tokenId].fractionalBuyer.length; i++) {
             address payable fractionalBuyersofNft = payable(idToNFT[_tokenId].fractionalBuyer[i]);
             fractionalBuyersofNft.transfer(newPrice);
         }
+        emit ExecuteTransaction(msg.sender, _txIndex);
         _transfer(address(this), _to, _tokenId);
     }
 
