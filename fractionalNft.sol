@@ -34,7 +34,7 @@ contract FractionalNft is Pausable, ERC721{
 
     address[] private owners;
     Transaction[] private transactions;
-    mapping(address => bool) private isOwner;
+    mapping(uint256 => mapping(address => bool)) private isOwner;
     mapping(uint => mapping(address => bool)) private isConfirmed;
     mapping(uint256 => uint256) private shareAMountPerTokenId;
     mapping(uint256 => uint256) private totalSharesOfFractionalBuyerPerTokenId;
@@ -65,8 +65,8 @@ contract FractionalNft is Pausable, ERC721{
         uint256 price;
     }
 
-    modifier onlyFractionalOwners() {
-        require(isOwner[msg.sender], "not fractionalOwner");
+    modifier onlyFractionalOwners(uint256 _tokenId) {
+        require(isOwner[_tokenId][msg.sender], "not fractionalOwner");
         _;
     }
 
@@ -147,7 +147,7 @@ contract FractionalNft is Pausable, ERC721{
         totalSharesOfFractionalBuyerPerTokenId[_tokenId] = _totalShares;
         shareAMountPerTokenId[_tokenId] = shareAMountPerTokenId[_tokenId] - totalSharesOfFractionalBuyerPerTokenId[_tokenId];
         idToNFT[_tokenId].numOfFractionalBuyers += 1;
-        isOwner[msg.sender] = true;
+        isOwner[_tokenId][msg.sender] = true;
     }
 
     function submitTransaction(
@@ -155,9 +155,10 @@ contract FractionalNft is Pausable, ERC721{
         uint256 _tokenId,
         uint256 _price,
         uint _numConfirmationsRequired
-    ) public onlyFractionalOwners whenNotPaused {
+    ) external payable onlyFractionalOwners(_tokenId) whenNotPaused {
         require(_to != address(0), "Invalid to address");
-        require(_price > 0, "Invalid price");
+        require(_price > 0, "Price cannot be 0");
+        require(_price == msg.value, "Invalid price");
         require(
         _numConfirmationsRequired > 0 && _numConfirmationsRequired <= idToNFT[_tokenId].fractionalBuyersList.length, "invalid number of required confirmations");
         uint txIndex = transactions.length;
@@ -177,8 +178,9 @@ contract FractionalNft is Pausable, ERC721{
     }
 
     function confirmTransaction(
-        uint _txIndex
-    ) public onlyFractionalOwners txExists(_txIndex) notExecuted(_txIndex) notConfirmed(_txIndex) whenNotPaused {
+        uint _txIndex,
+        uint256 _tokenId
+    ) public onlyFractionalOwners(_tokenId) txExists(_txIndex) notExecuted(_txIndex) notConfirmed(_txIndex) whenNotPaused {
         Transaction storage transaction = transactions[_txIndex];
         transaction.numConfirmations += 1;
         isConfirmed[_txIndex][msg.sender] = true;
@@ -187,16 +189,16 @@ contract FractionalNft is Pausable, ERC721{
 
     function executeTransaction(
         uint _txIndex, address _to, uint256 _tokenId, uint256 _price
-    ) payable public onlyFractionalOwners txExists(_txIndex) notExecuted(_txIndex) whenNotPaused {
+    ) external onlyFractionalOwners(_tokenId) txExists(_txIndex) notExecuted(_txIndex) whenNotPaused {
         Transaction storage transaction = transactions[_txIndex];
         require(transaction.to == _to && transaction.price == _price && transaction.tokenId == _tokenId, "Invalid input");
+        require(transaction.from == msg.sender, "Invalid fractional owner");
         require(_price != 0, "Insufficient amount");
         require(
             transaction.numConfirmations >= transaction.numConfirmationsRequired,
             "cannot execute tx"
         );
         require(_price != 0, "Value cannot be 0");
-        require(_price == msg.value, "No value matched");
         emit ExecuteTransaction(msg.sender, _txIndex);
         uint256 newPrice = _price / idToNFT[_tokenId].fractionalBuyersList.length;
         for (uint i = 0; i < idToNFT[_tokenId].numOfFractionalBuyers; i++) {
@@ -208,8 +210,9 @@ contract FractionalNft is Pausable, ERC721{
     }
 
     function revokeConfirmation(
-        uint _txIndex
-    ) public onlyFractionalOwners txExists(_txIndex) notExecuted(_txIndex) whenNotPaused {
+        uint _txIndex,
+        uint256 _tokenId
+    ) public onlyFractionalOwners(_tokenId) txExists(_txIndex) notExecuted(_txIndex) whenNotPaused {
         Transaction storage transaction = transactions[_txIndex];
         require(isConfirmed[_txIndex][msg.sender], "tx not confirmed");
         transaction.numConfirmations -= 1;
@@ -260,7 +263,7 @@ contract FractionalNft is Pausable, ERC721{
         _unpause();
     }
 
-    function changeNumConfirmationsRequired(uint _txIndex, uint256 _numConfirmationsRequired) public whenNotPaused onlyFractionalOwners notExecuted(_txIndex) {
+    function changeNumConfirmationsRequired(uint _txIndex, uint256 _tokenId, uint256 _numConfirmationsRequired) public whenNotPaused onlyFractionalOwners(_tokenId) notExecuted(_txIndex) {
         Transaction storage transaction = transactions[_txIndex];
         require(transaction.from == msg.sender, "Owner who submitted the transaction can only call this function");
         require(transaction.numConfirmationsRequired != _numConfirmationsRequired, "Numbers of required confirmations is already same");
