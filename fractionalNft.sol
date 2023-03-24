@@ -198,13 +198,13 @@ contract FractionalNft is Pausable, ERC721{
             "cannot execute tx"
         );
         require(_price != 0, "Value cannot be 0");
-        emit ExecuteTransaction(msg.sender, _txIndex);
         uint256 newPrice = _price / idToNFT[_tokenId].fractionalBuyersList.length;
         for (uint i = 0; i < idToNFT[_tokenId].numOfFractionalBuyers; i++) {
             address payable fractionalBuyersofNft = payable(idToNFT[_tokenId].fractionalBuyersList[i]);
             fractionalBuyersofNft.transfer(newPrice);
         }
         idToNFT[_tokenId].owner = payable(_to);
+        emit ExecuteTransaction(msg.sender, _txIndex);
         _transfer(address(this), _to, _tokenId);
     }
 
