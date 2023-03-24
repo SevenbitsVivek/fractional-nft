@@ -147,7 +147,8 @@ contract FractionalNft is Pausable, ERC721, Ownable, ReentrancyGuard{
         require(
         _numConfirmationsRequired > 0 && _numConfirmationsRequired <= idToNFT[_tokenId].fractionalBuyer.length, "invalid required confirmation");
         require(_price > 0, "Price cannot be 0");
-        require(_price == msg.value, "Invalid price");require(block.timestamp >= _startTime, "Sale is not started yet");
+        require(_price == msg.value, "Invalid price");
+        require(block.timestamp >= _startTime, "Sale is not started yet");
         require(fractionalOwnersShares[_tokenId][msg.sender] >= _sharesToSell, "Not enough shares to sell");
         fractionalOwnersShares[_tokenId][msg.sender] -= _sharesToSell;
         require(_endTime > _startTime, "Invalid timestamp");
@@ -184,7 +185,7 @@ contract FractionalNft is Pausable, ERC721, Ownable, ReentrancyGuard{
         uint _txIndex, uint256 _tokenId, address _to, uint256 _price
     ) external onlyFractionalOwners(_tokenId) txExists(_txIndex) notExecuted(_txIndex) whenNotPaused nonReentrant {
         Transaction storage transaction = transactions[_txIndex];
-         require(block.timestamp > transaction.endTime, "Sale not over yet");
+        require(block.timestamp > transaction.endTime, "Sale not over yet");
         require(transaction.to == _to && transaction.price == _price && transaction.tokenId == _tokenId, "Invalid input parameters");
         require(_price != 0, "Insufficient amount");
         require(
