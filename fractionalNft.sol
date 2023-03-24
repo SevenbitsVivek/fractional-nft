@@ -159,8 +159,7 @@ contract FractionalNft is Pausable, ERC721{
         require(_to != address(0), "Invalid to address");
         require(_price > 0, "Price cannot be 0");
         require(_price == msg.value, "Invalid price");
-        require(
-        _numConfirmationsRequired > 0 && _numConfirmationsRequired <= idToNFT[_tokenId].fractionalBuyersList.length, "invalid number of required confirmations");
+        require(_numConfirmationsRequired > 0 && _numConfirmationsRequired <= idToNFT[_tokenId].fractionalBuyersList.length, "invalid number of required confirmations");
         uint txIndex = transactions.length;
         idToNFT[_tokenId].price = _price;
         transactions.push(
