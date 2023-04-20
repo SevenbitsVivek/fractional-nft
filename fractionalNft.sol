@@ -207,13 +207,10 @@ contract FractionalNft is Pausable, ERC721, Ownable, ReentrancyGuard{
             revert("Cannot divide by zero");
         }
         uint256 smartContractFees = (msg.value * 2) / 100;
-        console.log("smartContractFees ===>", smartContractFees);
         uint256 priceForFractionalOwner = msg.value - smartContractFees;
-        console.log("priceForFractionalOwner ===>", priceForFractionalOwner);
         for (uint i = 0; i < idToNFT[_tokenId].fractionalBuyer.length; i++) {
             address payable fractionalBuyer = payable(idToNFT[_tokenId].fractionalBuyer[i]);
             uint256 priceForFractionalOwnersTotalShares = priceForFractionalOwner / totalShares;
-            console.log("priceForFractionalOwnersTotalShares ===>", priceForFractionalOwnersTotalShares);
             fractionalBuyer.transfer(priceForFractionalOwnersTotalShares);
         }
         emit ExecuteTransaction(msg.sender, _txIndex);
